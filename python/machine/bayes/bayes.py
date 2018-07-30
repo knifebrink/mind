@@ -2,8 +2,21 @@
 Created on Oct 19, 2010
 
 @author: Peter
+朴素贝叶斯
+得到特征数据postingList 和classVec。
+得到对应的词的概率。
+对输入数据拥有词的概率进行相加。
+那个概率高选那个。
+本质是通过概率进行分类。 需要numpy灵活运用和矩阵知识更好理解，条件概率等，还有数学变换。
+
+老实说，现在一直很难判断优缺点，看天书一样。
+
+改算法初步具有学习的味道，
+有训练算法步骤（得到特征、向量数据）
+感觉代码量少，但是确实好困难啊
 '''
 from numpy import *
+
 
 def loadDataSet():
     postingList=[['my', 'dog', 'has', 'flea', 'problems', 'help', 'please'],
@@ -14,14 +27,15 @@ def loadDataSet():
                  ['quit', 'buying', 'worthless', 'dog', 'food', 'stupid']]
     classVec = [0,1,0,1,0,1]    #1 is abusive, 0 not
     return postingList,classVec
-                 
-def createVocabList(dataSet):
+
+
+def createVocabList(dataSet):   # 去除重复的关键字，返回列表
     vocabSet = set([])  #create empty set
     for document in dataSet:
         vocabSet = vocabSet | set(document) #union of the two sets
     return list(vocabSet)
 
-def setOfWords2Vec(vocabList, inputSet):
+def setOfWords2Vec(vocabList, inputSet):    # 将vocabList里的inputSet置为1.
     returnVec = [0]*len(vocabList)
     for word in inputSet:
         if word in vocabList:
@@ -29,11 +43,12 @@ def setOfWords2Vec(vocabList, inputSet):
         else: print("the word: %s is not in my Vocabulary!" % word)
     return returnVec
 
+
 def trainNB0(trainMatrix,trainCategory):
     numTrainDocs = len(trainMatrix)
     numWords = len(trainMatrix[0])
     pAbusive = sum(trainCategory)/float(numTrainDocs)
-    p0Num = ones(numWords); p1Num = ones(numWords)      #change to ones() 
+    p0Num = ones(numWords); p1Num = ones(numWords)      #change to ones()
     p0Denom = 2.0; p1Denom = 2.0                        #change to 2.0
     for i in range(numTrainDocs):
         if trainCategory[i] == 1:
@@ -82,7 +97,7 @@ def textParse(bigString):    #input is big string, #output is word list
     
 def spamTest():
     docList=[]; classList = []; fullText =[]
-    for i in range(1,26):
+    for i in range(1,26): #把文章所有单词列出来，得到特征数据
         wordList = textParse(open('email/spam/%d.txt' % i).read())
         docList.append(wordList)
         fullText.extend(wordList)
@@ -92,7 +107,9 @@ def spamTest():
         fullText.extend(wordList)
         classList.append(0)
     vocabList = createVocabList(docList)#create vocabulary
-    trainingSet = range(50); testSet=[]           #create test set
+    print(docList)
+    print(classList)
+    trainingSet =  list(range(50)); testSet=[]           #create test set
     for i in range(10):
         randIndex = int(random.uniform(0,len(trainingSet)))
         testSet.append(trainingSet[randIndex])
@@ -101,11 +118,11 @@ def spamTest():
     for docIndex in trainingSet:#train the classifier (get probs) trainNB0
         trainMat.append(bagOfWords2VecMN(vocabList, docList[docIndex]))
         trainClasses.append(classList[docIndex])
-    p0V,p1V,pSpam = trainNB0(array(trainMat),array(trainClasses))
+    p0V,p1V,pSpam = trainNB0(array(trainMat),array(trainClasses))# 根据特征数据计算词概念。
     errorCount = 0
     for docIndex in testSet:        #classify the remaining items
         wordVector = bagOfWords2VecMN(vocabList, docList[docIndex])
-        if classifyNB(array(wordVector),p0V,p1V,pSpam) != classList[docIndex]:
+        if classifyNB(array(wordVector),p0V,p1V,pSpam) != classList[docIndex]:#
             errorCount += 1
             print("classification error",docList[docIndex])
     print('the error rate is: ',float(errorCount)/len(testSet))
